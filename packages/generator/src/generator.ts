@@ -58,40 +58,64 @@ generatorHandler({
 			datamodel: options.dmmf.datamodel,
 		}
 
-		const basePath = options.generator.output?.value
-		if (!basePath) throw new Error('No output path specified')
+		const output = options.generator.output?.value
+		if (!output) throw new Error('No output path specified')
 
-		fs.existsSync(basePath) && fs.rmSync(basePath, { recursive: true })
-		fs.mkdirSync(basePath, { recursive: true })
+		fs.existsSync(output) && fs.rmSync(output, { recursive: true })
+		if (output.endsWith('.ts')) {
+			const splits = output.split('/')
+			if (splits.length > 1) {
+				fs.mkdirSync(splits.slice(0, -1).join('/'), { recursive: true })
+			}
+		} else {
+			fs.mkdirSync(output, { recursive: true })
+		}
+
+		const modules: Module[] = []
 
 		for (const module of adapter.extraModules ?? []) {
 			const moduleCreation = logger.createTask()
-			writeModule(basePath, module)
+
+			if (!output.endsWith('.ts')) {
+				writeModule(output, module)
+			} else {
+				modules.push(module)
+			}
+
 			moduleCreation.end(`◟ ${module.name}.ts`)
 		}
 
-		for (const prismaEnum of options.dmmf.datamodel.enums ?? []) {
+		for (const prismaEnum of options.dmmf.datamodel.enums) {
 			const enumCreation = logger.createTask()
 
 			const enumModule = createModule({
 				name: getEnumModuleName(prismaEnum),
 				declarations: [generateEnumDeclaration(adapter, prismaEnum)],
 			})
-			writeModule(basePath, enumModule)
+
+			if (!output.endsWith('.ts')) {
+				writeModule(output, enumModule)
+			} else {
+				modules.push(enumModule)
+			}
 
 			enumCreation.end(`◟ ${enumModule.name}.ts`)
 		}
 
-		const modelModules = options.dmmf.datamodel.models.map((model) => {
+		const modelModules: ModelModule[] = []
+		for (const model of options.dmmf.datamodel.models) {
 			const modelCreation = logger.createTask()
 
 			const modelModule = createModelModule({ model, ctx })
-			writeModule(basePath, modelModule)
+			if (!output.endsWith('.ts')) {
+				writeModule(output, modelModule)
+			} else {
+				modules.push(modelModule)
+			}
+			modelModules.push(modelModule)
 
 			modelCreation.end(`◟ ${modelModule.name}.ts`)
-
-			return modelModule
-		})
+		}
 
 		if (isRelationalQueryEnabled(options.generator.config)) {
 			const relationalModules = modelModules.flatMap((modelModule) => {
@@ -100,7 +124,11 @@ generatorHandler({
 				const relationalModule = createRelationalModule({ ctx, modelModule })
 				if (relationalModule == null) return []
 
-				writeModule(basePath, relationalModule)
+				if (!output.endsWith('.ts')) {
+					writeModule(output, relationalModule)
+				} else {
+					modules.push(relationalModule)
+				}
 
 				creation.end(`◟ ${relationalModule.name}.ts`)
 				return relationalModule
@@ -113,7 +141,11 @@ generatorHandler({
 					const modelCreation = logger.createTask()
 
 					const modelModule = createModelModule({ model, ctx })
-					writeModule(basePath, modelModule)
+					if (!output.endsWith('.ts')) {
+						writeModule(output, modelModule)
+					} else {
+						modules.push(modelModule)
+					}
 
 					modelCreation.end(`◟ ${modelModule.name}.ts`)
 					return modelModule
@@ -125,30 +157,53 @@ generatorHandler({
 					const relationalModule = createRelationalModule({ ctx, modelModule })
 					if (relationalModule == null) return []
 
-					writeModule(basePath, relationalModule)
+					if (!output.endsWith('.ts')) {
+						writeModule(output, relationalModule)
+					} else {
+						modules.push(relationalModule)
+					}
 
 					creation.end(`◟ ${relationalModule.name}.ts`)
 					return relationalModule
 				}
 			)
 
-			const schemaModule = createModule({
-				name: 'schema',
-				declarations: [
-					generateSchemaDeclaration([
-						...modelModules,
-						...relationalModules,
-						...implicitModelModules,
-						...implicitRelationalModules,
-					]),
-				],
+			if (!output.endsWith('.ts')) {
+				const schemaModule = createModule({
+					name: 'schema',
+					declarations: [
+						generateSchemaDeclaration([
+							...modelModules,
+							...relationalModules,
+							...implicitModelModules,
+							...implicitRelationalModules,
+						]),
+					],
+				})
+				writeModule(output, schemaModule)
+			}
+		}
+
+		if (output.endsWith('.ts')) {
+			const module = createModule({
+				name: output.split('/').at(-1)!.replace('.ts', ''),
+				declarations: modules.flatMap((module) =>
+					module.declarations.map((declaration) => {
+						return {
+							...declaration,
+							imports: declaration.imports.filter(
+								(i) => !i.module.startsWith('./')
+							),
+						}
+					})
+				),
 			})
-			writeModule(basePath, schemaModule)
+			writeModule(output.split('/').slice(0, -1).join('/'), module)
 		}
 
 		const formatter = options.generator.config.formatter
 		if (formatter === 'prettier') {
-			execSync(`prettier --write ${basePath}`, { stdio: 'inherit' })
+			execSync(`prettier --write ${output}`, { stdio: 'inherit' })
 		}
 	},
 })
