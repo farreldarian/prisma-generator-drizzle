@@ -5,6 +5,7 @@ import { createModule } from '~/lib/syntaxes/module'
 import { getDateMode } from '~/shared/date-mode'
 import { createAdapter } from '../adapter'
 import { createField, hasDefault, isDefaultFunc } from '../fields/createField'
+import type { BigIntMode } from '../fields/directives/custom'
 
 const coreModule = 'drizzle-orm/mysql-core'
 
@@ -63,7 +64,8 @@ export const mysqlAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport(['bigint'], coreModule)],
-				func: `bigint('${getDbName(field)}', { mode: 'bigint' })`,
+				func: (opts: { mode?: BigIntMode }) =>
+					`bigint('${getDbName(field)}', { mode: '${opts?.mode ?? 'bigint'}' })`,
 				onDefault(field) {
 					if (
 						field.isId &&
