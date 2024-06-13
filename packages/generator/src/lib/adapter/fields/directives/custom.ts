@@ -28,8 +28,11 @@ const ImportSchema = v.object({
 	type: v.optional(v.boolean()),
 })
 
+const BigIntMode = v.picklist(['number', 'bigint'])
+export type BigIntMode = v.InferOutput<typeof BigIntMode>
+
 const FieldSchema = v.object({
-	mode: v.optional(v.picklist(['number', 'bigint'])),
+	mode: v.optional(BigIntMode),
 })
 
 const DirectiveSchema = v.object({
