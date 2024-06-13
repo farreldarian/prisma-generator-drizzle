@@ -207,6 +207,7 @@ model FieldCustomization {
   ///   "imports": [{ "name": ["SomeBigInt"], "module": "~/tests/shared/testFieldCustomization", "type": true }],
   ///   "type": "SomeBigInt",
   ///   "default": "() => 1n"
+  ///   "field": { "mode": "number" }
   /// }
   allFields BigInt
 }

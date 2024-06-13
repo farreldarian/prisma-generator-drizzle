@@ -22,7 +22,7 @@ export function testFieldCustomization({ db, schema, provider }: TestContext) {
 
 		test('should contain correct field definition', () => {
 			expect(content).toInclude(
-				"allFields: bigint('allFields', { mode: 'bigint' }).$type<SomeBigInt>().$defaultFn(() => 1n)"
+				"allFields: bigint('allFields', { mode: 'number' }).$type<SomeBigInt>().$defaultFn(() => 1n)"
 			)
 		})
 	})
