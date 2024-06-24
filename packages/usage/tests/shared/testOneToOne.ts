@@ -49,5 +49,21 @@ export function testOneToOne({ db, schema }: TestContext) {
 				a,
 			})
 		})
+
+		test('c.a (holds foreign key, required)', async () => {
+			const result = await db.query.oneToOneCs
+				.findFirst({
+					where: (oneToOneCs, { eq }) => eq(oneToOneCs.id, a.id),
+					with: {
+						b: true,
+					},
+				})
+				.then(throwIfnull)
+
+			// expect(result).toStrictEqual({
+			// 	...b,
+			// 	a,
+			// })
+		})
 	})
 }
