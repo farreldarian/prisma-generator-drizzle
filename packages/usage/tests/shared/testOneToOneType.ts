@@ -3,12 +3,12 @@ import { eq } from 'drizzle-orm'
 import { throwIfnull } from 'tests/utils/query'
 import type { TestContext } from 'tests/utils/types'
 
-export function testOneToOne({ db, schema }: TestContext) {
+export function testOneToOneType({ db, schema }: TestContext) {
 	const b: typeof schema.oneToOneBs.$inferInsert = { id: createId() }
 	const a: typeof schema.oneToOneAs.$inferInsert = { id: createId(), bId: b.id }
 	const c: typeof schema.oneToOneCs.$inferInsert = { id: createId(), bId: b.id }
 
-	describe('one to one', () => {
+	describe('one to one (type)', () => {
 		beforeAll(async () => {
 			await db.insert(schema.oneToOneBs).values(b)
 			await db.insert(schema.oneToOneCs).values(c)
@@ -31,10 +31,7 @@ export function testOneToOne({ db, schema }: TestContext) {
 				})
 				.then(throwIfnull)
 
-			expect(result).toStrictEqual({
-				...a,
-				b,
-			})
+			expectTypeOf(result.b).toBeNullable()
 		})
 
 		test('c.b (holds foreign key - required)', async () => {
@@ -47,10 +44,7 @@ export function testOneToOne({ db, schema }: TestContext) {
 				})
 				.then(throwIfnull)
 
-			expect(result).toStrictEqual({
-				...c,
-				b,
-			})
+			expectTypeOf(result.b).not.toBeNullable()
 		})
 
 		test('b.{a,c} (being referenced)', async () => {
@@ -64,11 +58,8 @@ export function testOneToOne({ db, schema }: TestContext) {
 				})
 				.then(throwIfnull)
 
-			expect(result).toStrictEqual({
-				...b,
-				a,
-				c,
-			})
+			expectTypeOf(result.a).toBeNullable()
+			expectTypeOf(result.c).toBeNullable()
 		})
 	})
 }
