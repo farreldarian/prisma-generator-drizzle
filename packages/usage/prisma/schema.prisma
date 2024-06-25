@@ -154,6 +154,13 @@ model OneToOne_A {
 model OneToOne_B {
   id String      @id
   a  OneToOne_A?
+  c  OneToOne_C?
+}
+
+model OneToOne_C {
+  id  String     @id
+  b   OneToOne_B @relation(fields: [bId], references: [id])
+  bId String     @unique
 }
 
 // #endregion

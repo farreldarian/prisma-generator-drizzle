@@ -97,25 +97,36 @@ function createRelation(input: {
 	}
 }
 
+function holdsForeignKey(args: {
+	field: PrismaRelationField
+	model: DMMF.Model
+}) {
+	const { field, model } = args
+	return model.fields.some((f) =>
+		field.relationFromFields.some((from) => f.name === from)
+	)
+}
+
 function getOneToOneOrManyRelation(
 	field: PrismaRelationField,
 	ctx: GenerateTableRelationsInput
 ) {
 	if (hasReference(field)) {
-		const opts = createRelationOpts({
-			relationName: field.relationName,
-			from: {
-				modelVarName: getModelVarName(ctx.modelModule.model),
-				fieldNames: field.relationFromFields,
-			},
-			to: {
-				modelVarName: getModelVarName(field.type),
-				fieldNames: field.relationToFields,
-			},
-		})
 		return createRelation({
 			referenceModelVarName: getModelVarName(field.type),
-			opts,
+			opts: holdsForeignKey({ field, model: ctx.modelModule.model })
+				? createRelationOpts({
+						relationName: field.relationName,
+						from: {
+							modelVarName: getModelVarName(ctx.modelModule.model),
+							fieldNames: field.relationFromFields,
+						},
+						to: {
+							modelVarName: getModelVarName(field.type),
+							fieldNames: field.relationToFields,
+						},
+					})
+				: undefined,
 		})
 	}
 
@@ -123,21 +134,22 @@ function getOneToOneOrManyRelation(
 
 	const opposingModel = findOpposingRelationModel(field, ctx.datamodel)
 	const opposingField = findOpposingRelationField(field, opposingModel)
-	const opts = createRelationOpts({
-		relationName: field.relationName,
-		from: {
-			modelVarName: getModelVarName(ctx.modelModule.model),
-			fieldNames: opposingField.relationToFields,
-		},
-		to: {
-			modelVarName: getModelVarName(field.type),
-			fieldNames: opposingField.relationFromFields,
-		},
-	})
 
 	return createRelation({
 		referenceModelVarName: getModelVarName(field.type),
-		opts,
+		opts: holdsForeignKey({ field, model: ctx.modelModule.model })
+			? createRelationOpts({
+					relationName: field.relationName,
+					from: {
+						modelVarName: getModelVarName(ctx.modelModule.model),
+						fieldNames: opposingField.relationToFields,
+					},
+					to: {
+						modelVarName: getModelVarName(field.type),
+						fieldNames: opposingField.relationFromFields,
+					},
+				})
+			: undefined,
 	})
 }
 
