@@ -200,3 +200,13 @@ model Disambiguating_Currency {
 }
 
 // #endregion
+
+model FieldCustomization {
+  id        Int    @id @default(autoincrement())
+  /// drizzle.custom {
+  ///   "imports": [{ "name": ["SomeBigInt"], "module": "~/tests/shared/testFieldCustomization", "type": true }],
+  ///   "type": "SomeBigInt",
+  ///   "default": "() => 1n"
+  /// }
+  allFields BigInt
+}

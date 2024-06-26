@@ -2,6 +2,7 @@ import { schema } from 'prisma/drizzle/schema'
 import { db } from 'src/lib/postgres'
 import { testDefault } from './shared/testDefault'
 import { testDisambiguatingRelationship } from './shared/testDisambiguatingRelationship'
+import { testFieldCustomization } from './shared/testFieldCustomization'
 import { testFields } from './shared/testFields'
 import { testIgnoreDecorator } from './shared/testIgnoreDecorator'
 import { testManyToMany } from './shared/testManyToMany'
@@ -20,3 +21,4 @@ testDisambiguatingRelationship(ctx)
 testSelfReferring(ctx)
 testIgnoreDecorator(ctx)
 testDefault(ctx)
+testFieldCustomization(ctx)
