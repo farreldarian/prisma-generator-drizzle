@@ -12,7 +12,9 @@ export type DefineImport = {
 export interface CreateFieldInput {
 	field: DMMF.Field
 	imports?: ImportValue[]
-	func: string
+	func:
+		| string
+		| (<T extends Partial<Record<string, unknown>>>(opts: T) => string)
 	onDefault?: (
 		field: FieldWithDefault
 	) => { code: string; imports?: ImportValue[] } | undefined
@@ -26,8 +28,6 @@ export function createField(input: CreateFieldInput) {
 
 	let imports = input.imports ?? []
 
-	let func = `${input.func}`
-
 	const custom = getCustomDirective(field)
 	if (custom?.imports) {
 		imports = imports.concat(
@@ -40,6 +40,8 @@ export function createField(input: CreateFieldInput) {
 			)
 		)
 	}
+
+	let func = `${typeof input.func === 'string' ? input.func : input.func(custom?.field ?? {})}`
 
 	// .type<...>()
 	const customType = getCustomType(field)

@@ -10,6 +10,7 @@ import {
 	hasDefault,
 	isDefaultFunc,
 } from '../fields/createField'
+import type { BigIntMode } from '../fields/directives/custom'
 
 const coreModule = 'drizzle-orm/pg-core'
 
@@ -81,7 +82,8 @@ export const postgresAdapter = createAdapter({
 			return createField({
 				field,
 				imports: [namedImport([func], coreModule)],
-				func: `${func}('${getDbName(field)}', { mode: 'bigint' })`,
+				func: (opts: { mode?: BigIntMode }) =>
+					`${func}('${getDbName(field)}', { mode: '${opts?.mode ?? 'bigint'}' })`,
 			})
 		},
 		// https://orm.drizzle.team/docs/column-types/pg/#boolean

@@ -28,10 +28,18 @@ const ImportSchema = v.object({
 	type: v.optional(v.boolean()),
 })
 
+const BigIntMode = v.picklist(['number', 'bigint'])
+export type BigIntMode = v.InferOutput<typeof BigIntMode>
+
+const FieldSchema = v.object({
+	mode: v.optional(BigIntMode),
+})
+
 const DirectiveSchema = v.object({
 	imports: v.optional(v.array(ImportSchema)),
 	type: v.optional(v.string()),
 	default: v.optional(v.string()),
+	field: v.optional(FieldSchema),
 })
 
 class InvalidDirectiveShapeError extends Error {
